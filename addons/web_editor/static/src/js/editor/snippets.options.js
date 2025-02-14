@@ -4712,7 +4712,7 @@ registry.sizing = SnippetOptionWidget.extend({
                 resize[0].forEach((val, key) => {
                     if (self.$target.hasClass(val)) {
                         current = key;
-                    } else if (resize[1][key] === cssPropertyValue) {
+                    } else if (parseInt(resize[1][key]) === cssPropertyValue) {
                         current = key;
                     }
                 });
@@ -6692,21 +6692,26 @@ registry.ImageTools = ImageHandlerOption.extend({
         const document = this.$el[0].ownerDocument;
         const imageCropWrapperElement = document.createElement('div');
         document.body.append(imageCropWrapperElement);
+
+        // Attach the event listener before attaching the component
+        const cropperPromise = new Promise(resolve => {
+            this.$target.one("image_cropper_destroyed", async () => {
+                if (isGif(this._getImageMimetype(img))) {
+                    img.dataset[img.dataset.shape ? "originalMimetype" : "mimetype"] = "image/png";
+                }
+                await this._reapplyCurrentShape();
+                resolve();
+            });
+        });
+
         const imageCropWrapper = await attachComponent(this, imageCropWrapperElement, ImageCrop, {
             activeOnStart: true,
             media: img,
             mimetype: this._getImageMimetype(img),
         });
 
-        await new Promise(resolve => {
-            this.$target.one('image_cropper_destroyed', async () => {
-                if (isGif(this._getImageMimetype(img))) {
-                    img.dataset[img.dataset.shape ? 'originalMimetype' : 'mimetype'] = 'image/png';
-                }
-                await this._reapplyCurrentShape();
-                resolve();
-            });
-        });
+        await cropperPromise;
+
         imageCropWrapperElement.remove();
         imageCropWrapper.destroy();
         this.trigger_up('enable_loading_effect');

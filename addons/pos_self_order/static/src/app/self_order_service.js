@@ -363,11 +363,8 @@ export class SelfOrder extends Reactive {
         const paymentMethods = this.filterPaymentMethods(
             this.models["pos.payment.method"].getAll()
         ); // Stripe, Adyen, Online
-        const order = await this.sendDraftOrderToServer();
 
-        if (!order) {
-            return;
-        }
+        let order = this.currentOrder;
 
         // Stand number page will recall this function after the stand number is set
         if (
@@ -377,6 +374,12 @@ export class SelfOrder extends Reactive {
             !order.table_stand_number
         ) {
             this.router.navigate("stand_number");
+            return;
+        }
+
+        order = await this.sendDraftOrderToServer();
+
+        if (!order) {
             return;
         }
 
@@ -845,6 +848,16 @@ export class SelfOrder extends Reactive {
         }
 
         return result;
+    }
+
+    verifyPriceLoading() {
+        if (this.priceLoading) {
+            this.notification.add(_t("Please wait until the price is loaded"), {
+                type: "danger",
+            });
+            return false;
+        }
+        return true;
     }
 
     getProductDisplayPrice(product) {

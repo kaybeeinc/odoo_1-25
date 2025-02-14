@@ -5,15 +5,15 @@
 # Translators:
 # Martin Trigaux, 2024
 # Wil Odoo, 2024
-# Abe Manyo, 2024
+# Abe Manyo, 2025
 # 
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-16 13:39+0000\n"
+"POT-Creation-Date: 2025-01-27 13:02+0000\n"
 "PO-Revision-Date: 2024-09-25 09:41+0000\n"
-"Last-Translator: Abe Manyo, 2024\n"
+"Last-Translator: Abe Manyo, 2025\n"
 "Language-Team: Indonesian (https://app.transifex.com/odoo/teams/41243/id/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -538,15 +538,6 @@ msgid "<span>We suggest you start by</span>"
 msgstr "<span>Kami menyarankan Anda memulai dengan</span>"
 
 #. module: mail
-#: model_terms:ir.ui.view,arch_db:mail.mail_notification_layout
-msgid ""
-"<strong>Internal communication</strong>: Replying will post an internal "
-"note. Followers won't receive any email notification."
-msgstr ""
-"<strong>Komunikasi internal</strong>: Membalas akan mempost catatan "
-"internal. Pengikut tidak akan menerima notifikasi email apapun."
-
-#. module: mail
 #: model_terms:ir.ui.view,arch_db:mail.res_config_settings_view_form
 msgid ""
 "<strong>Save</strong> this page and come back here to set up the feature."
@@ -630,6 +621,12 @@ msgstr ""
 "kegiatan."
 
 #. module: mail
+#. odoo-python
+#: code:addons/mail/models/mail_scheduled_message.py:0
+msgid "A scheduled message could not be sent"
+msgstr ""
+
+#. module: mail
 #: model:ir.model.fields,help:mail.field_res_config_settings__google_translate_api_key
 msgid ""
 "A valid Google API key is required to enable message translation. "
@@ -660,7 +657,7 @@ msgstr "Terima"
 #: code:addons/mail/static/src/discuss/call/common/call_action_list.xml:0
 #: code:addons/mail/static/src/discuss/call/common/call_invitation.xml:0
 msgid "Accept with camera"
-msgstr ""
+msgstr "Terima dengan kamera"
 
 #. module: mail
 #. odoo-python
@@ -1287,7 +1284,7 @@ msgstr "Kesalahan terjadi saat mengirimkan email"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/common/failure_model.js:0
 msgid "An error occurred when sending an email on “%(record_name)s”"
-msgstr ""
+msgstr "Terjadi error saat mengirim email pada “%(record_name)s”"
 
 #. module: mail
 #. odoo-javascript
@@ -1713,7 +1710,7 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/mail/static/src/discuss/call/common/call_actions.js:0
 msgid "Blur Background"
-msgstr ""
+msgstr "Blur Latar Belakang"
 
 #. module: mail
 #. odoo-javascript
@@ -2314,7 +2311,7 @@ msgstr "Kumpulkan reply pada alamat email tertentu"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/web/messaging_menu_patch.js:0
 msgid "Come here often? Install the app for quick and easy access!"
-msgstr ""
+msgstr "Sering datang ke sini? Instal app untuk akses cepat dan mudah!"
 
 #. module: mail
 #: model_terms:ir.ui.view,arch_db:mail.email_template_form
@@ -3376,7 +3373,7 @@ msgstr "Unduh:"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/common/mail_attachment_dropzone.xml:0
 msgid "Drop Files here"
-msgstr ""
+msgstr "Taruh File di sini"
 
 #. module: mail
 #: model:ir.model.fields,field_description:mail.field_mail_activity__date_deadline
@@ -3563,7 +3560,7 @@ msgstr "Email Domain"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/web/messaging_menu_patch.js:0
 msgid "Email Failure: %(modelName)s"
-msgstr ""
+msgstr "Email Gagal: %(modelName)s"
 
 #. module: mail
 #: model:ir.model.fields,field_description:mail.field_res_company__email_primary_color
@@ -3737,7 +3734,7 @@ msgstr "Hanya Karyawan"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/web/messaging_menu_patch.xml:0
 msgid "Enable"
-msgstr ""
+msgstr "Aktifkan"
 
 #. module: mail
 #: model:ir.model.fields,field_description:mail.field_ir_model_fields__tracking
@@ -3956,7 +3953,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/mail/models/mail_render_mixin.py:0
 msgid "Failed to render inline_template template: %(template_txt)s"
-msgstr ""
+msgstr "Gagal untuk merender templat inline_template: %(template_txt)s"
 
 #. module: mail
 #. odoo-python
@@ -3996,7 +3993,7 @@ msgstr "Tipe kegagalan"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/web/messaging_menu_patch.js:0
 msgid "Failure: %(modelName)s"
-msgstr ""
+msgstr "Gagal: %(modelName)s"
 
 #. module: mail
 #: model:ir.model.fields,field_description:mail.field_mail_mail__starred_partner_ids
@@ -4088,11 +4085,6 @@ msgid ""
 "File from where the template originates. Used to reset broken template."
 msgstr ""
 "FIle dari mana asal templat. Digunakan untuk mereset templat yang rusak."
-
-#. module: mail
-#: model:ir.model,name:mail.model_ir_binary
-msgid "File streaming helper model for controllers"
-msgstr "File streaming helper model untuk controller"
 
 #. module: mail
 #. odoo-javascript
@@ -4962,7 +4954,7 @@ msgstr "Mail Server masuk"
 #. odoo-javascript
 #: code:addons/mail/static/src/discuss/call/common/call_invitation.xml:0
 msgid "Incoming Video Call..."
-msgstr ""
+msgstr "Panggilan Video Masuk..."
 
 #. module: mail
 #: model:ir.model.fields,help:mail.field_mail_activity__automated
@@ -5017,7 +5009,7 @@ msgstr "Instal"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/web/messaging_menu_patch.js:0
 msgid "Install Odoo"
-msgstr ""
+msgstr "Instal Odoo"
 
 #. module: mail
 #: model:ir.ui.menu,name:mail.discuss_channel_integrations_menu
@@ -7180,7 +7172,7 @@ msgstr "Channel Terbuka"
 #. odoo-javascript
 #: code:addons/mail/static/src/js/tours/discuss_channel_tour.js:0
 msgid "Open Discuss App"
-msgstr ""
+msgstr "Buka App Discuss"
 
 #. module: mail
 #: model_terms:ir.ui.view,arch_db:mail.mail_alias_view_form
@@ -7216,6 +7208,12 @@ msgstr "Buka kartu"
 #: code:addons/mail/static/src/discuss/core/web/thread_actions.js:0
 msgid "Open in Discuss"
 msgstr "Buka di Diskusi"
+
+#. module: mail
+#. odoo-javascript
+#: code:addons/mail/static/src/core/common/attachment_view.xml:0
+msgid "Open preview in a separate window."
+msgstr "Buka pratinjau di jendela terpisah."
 
 #. module: mail
 #. odoo-python
@@ -7767,21 +7765,9 @@ msgstr ""
 
 #. module: mail
 #. odoo-javascript
-#: code:addons/mail/static/src/core/common/attachment_view.xml:0
-msgid "Pop out"
-msgstr "Pop out"
-
-#. module: mail
-#. odoo-javascript
 #: code:addons/mail/static/src/chatter/web/chatter.xml:0
 msgid "Pop out Attachments"
 msgstr "Pop out Lampiran"
-
-#. module: mail
-#. odoo-javascript
-#: code:addons/mail/static/src/core/common/attachment_view.xml:0
-msgid "Open preview in a separate window."
-msgstr ""
 
 #. module: mail
 #: model:ir.model.fields,field_description:mail.field_fetchmail_server__port
@@ -7895,7 +7881,7 @@ msgstr "Pratinjau"
 #. odoo-javascript
 #: code:addons/mail/static/src/discuss/call/common/call_invitation.xml:0
 msgid "Preview my camera"
-msgstr ""
+msgstr "Pratinjau kamera saya"
 
 #. module: mail
 #: model_terms:ir.ui.view,arch_db:mail.mail_template_preview_view_form
@@ -8088,6 +8074,12 @@ msgid "Ready to Send"
 msgstr "Siap Dikirim"
 
 #. module: mail
+#. odoo-javascript
+#: code:addons/mail/static/src/discuss/core/public_web/bus_connection_alert.xml:0
+msgid "Real-time connection lost..."
+msgstr "Real-time connection lost..."
+
+#. module: mail
 #: model:ir.model.fields,field_description:mail.field_mail_blacklist_remove__reason
 #: model_terms:ir.ui.view,arch_db:mail.mail_blacklist_remove_view_form
 msgid "Reason"
@@ -8259,7 +8251,7 @@ msgstr "Hapus"
 #. odoo-javascript
 #: code:addons/mail/static/src/discuss/call/common/call_actions.js:0
 msgid "Remove Blur"
-msgstr ""
+msgstr "Hapus Blur"
 
 #. module: mail
 #: model_terms:ir.ui.view,arch_db:mail.email_template_form
@@ -9251,7 +9243,7 @@ msgstr "Mulai Percakapan"
 #. odoo-javascript
 #: code:addons/mail/static/src/discuss/call/common/thread_actions.js:0
 msgid "Start a Video Call"
-msgstr ""
+msgstr "Mulai Panggilan Video"
 
 #. module: mail
 #. odoo-javascript
@@ -9314,6 +9306,8 @@ msgstr "Status dengan waktu"
 #: code:addons/mail/static/src/core/web/messaging_menu_patch.js:0
 msgid "Stay tuned! Enable push notifications to never miss a message."
 msgstr ""
+"Stay tuned! Aktifkan push notification untuk tidak pernah lagi ketinggalan "
+"pesan."
 
 #. module: mail
 #: model:ir.model.fields,field_description:mail.field_mail_activity_plan__steps_count
@@ -9813,6 +9807,14 @@ msgstr ""
 "Silakan coba lagi nanti atau hubungi %(company_name)s."
 
 #. module: mail
+#. odoo-python
+#: code:addons/mail/models/mail_scheduled_message.py:0
+msgid ""
+"The message scheduled on %(model)s(%(id)s) with the following content could "
+"not be sent:%(original_message)s"
+msgstr ""
+
+#. module: mail
 #: model:ir.model.fields,help:mail.field_discuss_channel__from_message_id
 msgid "The message the channel was created from."
 msgstr "Pesan di mana channel dibuat."
@@ -10219,7 +10221,7 @@ msgstr "Aktivitas Hari ini"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/common/message_model.js:0
 msgid "Today at %(time)s"
-msgstr ""
+msgstr "Hari ini pada jam %(time)s"
 
 #. module: mail
 #. odoo-javascript
@@ -10338,7 +10340,7 @@ msgstr "Nyalakan kamera"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/web/messaging_menu_patch.js:0
 msgid "Turn on notifications"
-msgstr ""
+msgstr "Aktifkan notifikasi"
 
 #. module: mail
 #: model:ir.model.fields,field_description:mail.field_res_config_settings__twilio_account_token
@@ -11142,7 +11144,7 @@ msgstr "Apakah untuk menampilkan semua penerima atau hanya yang penting."
 #. module: mail
 #: model_terms:ir.ui.view,arch_db:mail.email_template_form
 msgid "Write /field to insert dynamic content"
-msgstr ""
+msgstr "Tulis /field untuk memasukkan konten dinamis"
 
 #. module: mail
 #. odoo-javascript
@@ -11195,7 +11197,7 @@ msgstr "Kemarin"
 #. odoo-javascript
 #: code:addons/mail/static/src/core/common/message_model.js:0
 msgid "Yesterday at %(time)s"
-msgstr ""
+msgstr "Kemarin pada jam %(time)s"
 
 #. module: mail
 #. odoo-javascript

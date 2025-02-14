@@ -1,3 +1,5 @@
+/* global posmodel */
+
 import * as BillScreen from "@pos_restaurant/../tests/tours/utils/bill_screen_util";
 import * as PaymentScreen from "@point_of_sale/../tests/tours/utils/payment_screen_util";
 import * as Dialog from "@point_of_sale/../tests/tours/utils/dialog_util";
@@ -106,11 +108,6 @@ registry.category("web_tour.tours").add("pos_restaurant_sync", {
             ProductScreen.clickPayButton(),
             PaymentScreen.clickPaymentMethod("Cash"),
             PaymentScreen.clickValidate(),
-            {
-                ...Dialog.confirm(),
-                content:
-                    "acknowledge printing error ( because we don't have printer in the test. )",
-            },
             ReceiptScreen.clickNextOrder(),
             // Check if there ids no active Order
             Chrome.activeTableOrOrderIs("Table"),
@@ -190,7 +187,8 @@ registry.category("web_tour.tours").add("pos_restaurant_sync_second_login", {
             FloorScreen.clickTable("4"),
 
             // Test if products still get merged after transfering the order
-            ProductScreen.clickDisplayedProduct("Water", true, "2.0"),
+            ProductScreen.totalAmountIs("4.40"),
+            ProductScreen.clickDisplayedProduct("Water"),
             ProductScreen.totalAmountIs("6.60"),
             ProductScreen.clickNumpad("1"),
             ProductScreen.totalAmountIs("4.40"),
@@ -268,11 +266,6 @@ registry.category("web_tour.tours").add("OrderTrackingTour", {
             PaymentScreen.clickPaymentMethod("Bank"),
             PaymentScreen.clickValidate(),
             ReceiptScreen.isShown(),
-            {
-                content:
-                    "As the font can't be loaded, we wait printing failed modal before close tour",
-                trigger: ".modal:contains(printing failed)",
-            },
         ].flat(),
 });
 registry.category("web_tour.tours").add("CategLabelCheck", {
@@ -336,6 +329,7 @@ registry.category("web_tour.tours").add("PoSPaymentSyncTour1", {
             ProductScreen.isShown(),
             ProductScreen.clickOrderButton(),
             ProductScreen.orderlinesHaveNoChange(),
+            Chrome.clickPlanButton(),
         ].flat(),
 });
 
@@ -357,6 +351,7 @@ registry.category("web_tour.tours").add("PoSPaymentSyncTour2", {
             ProductScreen.isShown(),
             ProductScreen.clickOrderButton(),
             ProductScreen.orderlinesHaveNoChange(),
+            Chrome.clickPlanButton(),
         ].flat(),
 });
 
@@ -377,5 +372,45 @@ registry.category("web_tour.tours").add("PoSPaymentSyncTour3", {
             ProductScreen.isShown(),
             ProductScreen.clickOrderButton(),
             ProductScreen.orderlinesHaveNoChange(),
+            Chrome.clickPlanButton(),
+        ].flat(),
+});
+
+registry.category("web_tour.tours").add("PreparationPrinterContent", {
+    steps: () =>
+        [
+            Chrome.startPoS(),
+            Dialog.confirm("Open Register"),
+            FloorScreen.clickTable("5"),
+            ProductScreen.clickDisplayedProduct("Product Test"),
+            Dialog.confirm("Add"),
+            ProductScreen.totalAmountIs("10"),
+            {
+                content: "Check if order preparation contains always Variant",
+                trigger: "body",
+                run: async () => {
+                    const order = posmodel.get_order();
+                    const data = posmodel.getOrderChanges();
+                    const changes = Object.values(data.orderlines);
+                    const printed = await posmodel.getRenderedReceipt(order, "New", changes);
+
+                    if (!printed.innerHTML.includes("Product Test (Value 1)")) {
+                        throw new Error("Product Test (Value 1) not found in printed receipt");
+                    }
+                },
+            },
+        ].flat(),
+});
+
+registry.category("web_tour.tours").add("MultiPreparationPrinter", {
+    checkDelay: 50,
+    steps: () =>
+        [
+            Chrome.startPoS(),
+            Dialog.confirm("Open Register"),
+            FloorScreen.clickTable("5"),
+            ProductScreen.clickDisplayedProduct("Product 1"),
+            ProductScreen.clickOrderButton(),
+            Dialog.bodyIs("Failed in printing Detailed Receipt changes of the order"),
         ].flat(),
 });

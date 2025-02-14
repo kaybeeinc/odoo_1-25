@@ -254,7 +254,7 @@ class HTML_Editor(http.Controller):
             # only supported image types are incorporated into the data.
             response = requests.head(url, timeout=10)
             if response.status_code == 200:
-                mime_type = response.headers['content-type']
+                mime_type = response.headers.get('content-type')
                 if mime_type in SUPPORTED_IMAGE_MIMETYPES:
                     attachment_data['mimetype'] = mime_type
         else:
@@ -561,7 +561,7 @@ class HTML_Editor(http.Controller):
     @http.route('/html_editor/link_preview_external', type="json", auth="public", methods=['POST'])
     def link_preview_metadata(self, preview_url):
         link_preview_data = link_preview.get_link_preview_from_url(preview_url)
-        if link_preview_data['og_description']:
+        if link_preview_data and link_preview_data.get('og_description'):
             link_preview_data['og_description'] = html.fromstring(link_preview_data['og_description']).text_content()
         return link_preview_data
 

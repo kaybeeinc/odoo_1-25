@@ -67,6 +67,7 @@ const getRangePosition = OdooEditorLib.getRangePosition;
 const childNodeIndex = OdooEditorLib.childNodeIndex;
 const fillEmpty = OdooEditorLib.fillEmpty;
 const isVisible = OdooEditorLib.isVisible;
+const getSelectedNodes = OdooEditorLib.getSelectedNodes;
 const getDeepestPosition = OdooEditorLib.getDeepestPosition;
 const paragraphRelatedElements = OdooEditorLib.paragraphRelatedElements;
 
@@ -455,7 +456,7 @@ export class Wysiwyg extends Component {
                     const [deepestNode] = getDeepestPosition(selection.anchorNode, selection.anchorOffset);
                     const elementSelectors = [
                         'LI:not([t-field])',
-                        'DIV:not([t-field]):not(.o_not_editable)',
+                        "DIV:not([t-field]):not(.o_not_editable):not([contenteditable='false'])",
                         ...paragraphRelatedElements.map(tag => `${tag}:not([t-field])`),
                     ];
                     const baseNode = closestElement(deepestNode, elementSelectors.join(', '));
@@ -1381,7 +1382,25 @@ export class Wysiwyg extends Component {
      * Open the link tools or the image link tool depending on the selection.
      */
     openLinkToolsFromSelection() {
-        const targetEl = this.odooEditor.document.getSelection().getRangeAt(0).startContainer;
+        const selection = this.odooEditor.document.getSelection();
+        // If there is no selection return
+        if (!selection || selection.rangeCount === 0) {
+            return;
+        }
+        // If there is a video in selection then return
+        for (const el of getSelectedNodes(this.odooEditor.editable)) {
+            if (
+                el.classList?.contains("media_iframe_video")
+                || el.classList?.contains("media_iframe_video_size")
+            ) {
+                return;
+            }
+        }
+        const targetEl = selection.getRangeAt(0).startContainer;
+        // Avoid toggleLinkTools for video if targetEl is text
+        if (closestElement(targetEl, ".media_iframe_video")) {
+            return;
+        }
         // Link tool is different if the selection is an image or a text.
         if (targetEl.nodeType === Node.ELEMENT_NODE
                 && (targetEl.tagName === 'IMG' || targetEl.querySelectorAll('img').length === 1)) {
@@ -1478,7 +1497,7 @@ export class Wysiwyg extends Component {
                     if (
                         !ev.target.closest('#create-link') &&
                         !ev.target.closest(".o_technical_modal") &&
-                        (!ev.target.closest('.oe-toolbar') || !ev.target.closest('we-customizeblock-option')) &&
+                        !ev.target.closest('.oe-toolbar') &&
                         !ev.target.closest('.ui-autocomplete') &&
                         (!this.state.linkToolProps || ![ev.target, ...wysiwygUtils.ancestors(ev.target)].includes(this.linkToolsInfos.link))
                     ) {
@@ -1633,9 +1652,13 @@ export class Wysiwyg extends Component {
                     }
                 } else {
                     const commonBlock = selection.rangeCount && closestBlock(selection.getRangeAt(0).commonAncestorContainer);
-                    [anchorNode, focusNode] = commonBlock && link.contains(commonBlock) ? [commonBlock, commonBlock] : [link, link];
+                    if (commonBlock && link.contains(commonBlock)) {
+                        [anchorNode, focusNode] = [commonBlock, commonBlock];
+                    } else if (!this.$editable[0].contains(selection.anchorNode)) {
+                        [anchorNode, focusNode] = [link, link];
+                    }
                 }
-                if (!focusOffset) {
+                if (!focusOffset && focusNode) {
                     focusOffset = focusNode.childNodes.length || focusNode.length;
                 }
             }
@@ -1711,7 +1734,7 @@ export class Wysiwyg extends Component {
             close: () => restoreSelection(),
             ...this.options.mediaModalParams,
             ...params,
-            noVideos: !this.options.allowCommandVideo,
+            noVideos: !this.options.allowCommandVideo || params.noVideos,
         });
     }
     // todo: test me
@@ -2050,8 +2073,11 @@ export class Wysiwyg extends Component {
             if (!this.lastMediaClicked) {
                 return;
             }
+            const anchorNode = this.lastMediaClicked.parentElement;
+            const anchorOffset = Array.from(anchorNode.childNodes).indexOf(this.lastMediaClicked);
             $(this.lastMediaClicked).remove();
             this.lastMediaClicked = undefined;
+            setSelection(anchorNode, anchorOffset, anchorNode, anchorOffset);
             this.odooEditor.toolbarHide();
         });
         $toolbar.find('#fa-resize div').click(e => {
@@ -2149,7 +2175,10 @@ export class Wysiwyg extends Component {
         coloredElements = coloredElements.filter(element => this.odooEditor.document.contains(element));
 
         const coloredTds = coloredElements && coloredElements.length && Array.isArray(coloredElements) && coloredElements.filter(coloredElement => coloredElement.classList.contains('o_selected_td'));
-        if (coloredTds.length) {
+        if (selectedTds.length === 1 && !previewMode) {
+            const sel = this.odooEditor.document.getSelection();
+            sel.collapseToEnd();
+        } else if (coloredTds.length) {
             const propName = colorType === 'text' ? 'color' : 'background-color';
             for (const td of coloredTds) {
                 // Make it important so it has priority over selection color.
@@ -2468,14 +2497,12 @@ export class Wysiwyg extends Component {
                     [$(x).data('oe-translation-source-sha')]: this._getEscapedElement($(x)).html()
                 })
             ));
-            return this.orm.call(
-                $els.data('oe-model'),
-                'web_update_field_translations',
-                [
-                    [+$els.data('oe-id')],
-                    $els.data('oe-field'),
-                    translations,
-                ], { context });
+            return rpc('/web_editor/field/translation/update', {
+                model: $els.data('oe-model'),
+                record_id: [+$els.data('oe-id')],  
+                field_name: $els.data('oe-field'),
+                translations,                
+            });
         } else {
             var viewID = $el.data('oe-id');
             if (!viewID) {
@@ -2918,10 +2945,16 @@ export class Wysiwyg extends Component {
         }
     }
     _onSelectionChange() {
-        if (this.odooEditor.autohideToolbar && this.linkPopover) {
+        if (this.linkPopover && this.isSelectionInEditable()) {
             const selectionInLink = getInSelection(this.odooEditor.document, 'a') === this.linkPopover.target;
             const isVisible = this.linkPopover.el.offsetParent;
-            if (isVisible && !selectionInLink) {
+            if (
+                isVisible &&
+                (
+                    (this.options.autohideToolbar && !this.odooEditor.document.getSelection().isCollapsed) ||
+                    !selectionInLink
+                )
+            ) {
                 this.linkPopover.hide();
             }
         }

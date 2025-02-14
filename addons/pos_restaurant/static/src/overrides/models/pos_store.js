@@ -1,21 +1,7 @@
 import { patch } from "@web/core/utils/patch";
 import { PosStore } from "@point_of_sale/app/store/pos_store";
-import { PaymentScreen } from "@point_of_sale/app/screens/payment_screen/payment_screen";
-import { FloorScreen } from "@pos_restaurant/app/floor_screen/floor_screen";
 import { ConnectionLostError } from "@web/core/network/rpc";
 import { _t } from "@web/core/l10n/translation";
-
-const NON_IDLE_EVENTS = [
-    "mousemove",
-    "mousedown",
-    "touchstart",
-    "touchend",
-    "touchmove",
-    "click",
-    "scroll",
-    "keypress",
-];
-let IDLE_TIMER_SETTER;
 
 patch(PosStore.prototype, {
     /**
@@ -26,49 +12,17 @@ patch(PosStore.prototype, {
         this.tableSyncing = false;
         await super.setup(...arguments);
     },
-    async recordSynchronisation(data) {
-        await super.recordSynchronisation(...arguments);
-        if (data.records["pos.order"]?.length > 0) {
-            // Verify if there is only 1 order by table.
-            const orderByTableId = this.models["pos.order"].reduce((acc, order) => {
-                // Floating order doesn't need to be verified.
-                if (!order.finalized && order.table_id?.id) {
-                    acc[order.table_id.id] = acc[order.table_id.id] || [];
-                    acc[order.table_id.id].push(order);
-                }
-                return acc;
-            }, {});
-
-            for (const orders of Object.values(orderByTableId)) {
-                if (orders.length > 1) {
-                    // The only way to get here is if there is several waiters on the same table.
-                    // In this case we take orderline of the local order and we add it to the synced order.
-                    const syncedOrder = orders.find((order) => typeof order.id === "number");
-                    const localOrders = orders.find((order) => typeof order.id !== "number");
-
-                    let watcher = 0;
-                    while (localOrders.lines.length > 0) {
-                        if (watcher > 1000) {
-                            break;
-                        }
-
-                        const line = localOrders.lines.pop();
-                        line.update({ order_id: syncedOrder });
-                        line.setDirty();
-                        watcher++;
-                    }
-
-                    // Remove local orders from the local database.
-                    if (this.get_order()?.id === localOrders.id) {
-                        this.set_order(syncedOrder);
-                        this.addPendingOrder([syncedOrder.id]);
-                    }
-
-                    localOrders.delete();
-                }
-            }
-            this.computeTableCount();
-        }
+    get idleTimeout() {
+        return [
+            ...super.idleTimeout,
+            {
+                timeout: 180000, // 3 minutes
+                action: () =>
+                    this.config.module_pos_restaurant &&
+                    this.mainScreen.component.name !== "PaymentScreen" &&
+                    this.showScreen("FloorScreen"),
+            },
+        ];
     },
     get firstScreen() {
         const screen = super.firstScreen;
@@ -90,9 +44,9 @@ patch(PosStore.prototype, {
         }
         return orderIsDeleted;
     },
-    async closingSessionNotification(data) {
+    async closingSessionNotification() {
         await super.closingSessionNotification(...arguments);
-        this.computeTableCount(data);
+        this.computeTableCount();
     },
     computeTableCount() {
         const tables = this.models["restaurant.table"].getAll();
@@ -166,30 +120,6 @@ patch(PosStore.prototype, {
 
         return order;
     },
-    setActivityListeners() {
-        IDLE_TIMER_SETTER = this.setIdleTimer.bind(this);
-        for (const event of NON_IDLE_EVENTS) {
-            window.addEventListener(event, IDLE_TIMER_SETTER);
-        }
-    },
-    setIdleTimer() {
-        clearTimeout(this.idleTimer);
-        if (this.shouldResetIdleTimer()) {
-            this.idleTimer = setTimeout(() => this.actionAfterIdle(), 180000);
-        }
-    },
-    async actionAfterIdle() {
-        if (!document.querySelector(".modal-open")) {
-            const table = this.selectedTable;
-            const order = this.get_order();
-            if (order && order.get_screen_data().name === "ReceiptScreen") {
-                // When the order is finalized, we can safely remove it from the memory
-                // We check that it's in ReceiptScreen because we want to keep the order if it's in a tipping state
-                this.removeOrder(order);
-            }
-            this.showScreen("FloorScreen", { floor: table?.floor });
-        }
-    },
     getReceiptHeaderData(order) {
         const json = super.getReceiptHeaderData(...arguments);
         if (this.config.module_pos_restaurant && order) {
@@ -199,19 +129,6 @@ patch(PosStore.prototype, {
             json.customer_count = order.getCustomerCount();
         }
         return json;
-    },
-    shouldResetIdleTimer() {
-        const stayPaymentScreen =
-            this.mainScreen.component === PaymentScreen && this.get_order().payment_ids.length > 0;
-        return (
-            this.config.module_pos_restaurant &&
-            !stayPaymentScreen &&
-            this.mainScreen.component !== FloorScreen
-        );
-    },
-    showScreen(screenName) {
-        super.showScreen(...arguments);
-        this.setIdleTimer();
     },
     closeScreen() {
         if (this.config.module_pos_restaurant && !this.get_order()) {
@@ -224,25 +141,11 @@ patch(PosStore.prototype, {
             return super.addOrderIfEmpty(...arguments);
         }
     },
-    /**
-     * @override
-     * Before closing pos, we remove the event listeners set on window
-     * for detecting activities outside FloorScreen.
-     */
-    async closePos() {
-        if (IDLE_TIMER_SETTER) {
-            for (const event of NON_IDLE_EVENTS) {
-                window.removeEventListener(event, IDLE_TIMER_SETTER);
-            }
-        }
-        return super.closePos(...arguments);
-    },
     //@override
     async afterProcessServerData() {
         this.floorPlanStyle =
             localStorage.getItem("floorPlanStyle") || (this.ui.isSmall ? "kanban" : "default");
         if (this.config.module_pos_restaurant) {
-            this.setActivityListeners();
             this.currentFloor = this.config.floor_ids?.length > 0 ? this.config.floor_ids[0] : null;
         }
 
@@ -286,6 +189,7 @@ patch(PosStore.prototype, {
         return super.getDefaultSearchDetails();
     },
     async setTable(table, orderUuid = null) {
+        this.deviceSync.readDataFromServer();
         this.selectedTable = table;
 
         const tableOrders = table.orders;
@@ -347,7 +251,7 @@ patch(PosStore.prototype, {
         const order = this.get_order();
         if (order && !order.isBooked) {
             this.removeOrder(order);
-        } else if (order) {
+        } else if (order && this.previousScreen !== "ReceiptScreen") {
             if (!this.orderToTransferUuid) {
                 this.syncAllOrders({ orders: [order] });
             } else {
@@ -371,6 +275,7 @@ patch(PosStore.prototype, {
     },
     async transferOrder(orderUuid, destinationTable) {
         const order = this.models["pos.order"].getBy("uuid", orderUuid);
+        const destinationOrder = this.getActiveOrdersOnTable(destinationTable)[0];
         const originalTable = order.table_id;
         this.loadingOrderState = false;
         this.alert.dismiss();
@@ -384,8 +289,6 @@ patch(PosStore.prototype, {
             this.set_order(order);
             this.addPendingOrder([order.id]);
         } else {
-            const destinationOrder = this.getActiveOrdersOnTable(destinationTable)[0];
-            const linesToUpdate = [];
             for (const orphanLine of order.lines) {
                 const adoptingLine = destinationOrder.lines.find((l) =>
                     l.can_be_merged_with(orphanLine)
@@ -393,18 +296,19 @@ patch(PosStore.prototype, {
                 if (adoptingLine) {
                     adoptingLine.merge(orphanLine);
                 } else {
-                    linesToUpdate.push(orphanLine);
+                    const serialized = orphanLine.serialize();
+                    serialized.order_id = destinationOrder.id;
+                    delete serialized.uuid;
+                    delete serialized.id;
+                    this.models["pos.order.line"].create(serialized, false, true);
                 }
             }
-            linesToUpdate.forEach((orderline) => {
-                orderline.update({ order_id: destinationOrder });
-            });
+
             this.set_order(destinationOrder);
-            if (destinationOrder?.id) {
-                this.addPendingOrder([destinationOrder.id]);
-            }
             await this.deleteOrders([order]);
         }
+
+        await this.syncAllOrders({ orders: [destinationOrder || order] });
         await this.setTable(destinationTable);
     },
     getCustomerCount(tableId) {
